@@ -6,10 +6,9 @@ import UserInfo from './UserInfo';
 import Dashboard from './Dashboard';
 import './App.css';
 
-
 // NavBar Component
 const NavBar = () => {
-    const { state, dispatch } = useAuth();
+    const { isAuthenticated, dispatch } = useAuth();
 
     const handleLogout = () => {
         dispatch({ type: 'LOGOUT' });
@@ -19,7 +18,7 @@ const NavBar = () => {
         <nav>
             <Link to="/">Dashboard</Link>
             {/* Show the Login link only if the user is not authenticated */}
-            {!state.isAuthenticated ? (
+            {!isAuthenticated ? (
                 <Link to="/login">Login</Link>
             ) : (
                 <button onClick={handleLogout}>Logout</button>

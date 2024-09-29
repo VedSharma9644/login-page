@@ -1,46 +1,60 @@
-import React, { createContext, useContext, useReducer } from 'react';
+import React, { createContext, useReducer, useContext, useEffect } from 'react';
+import PropTypes from 'prop-types';
+
+// Initial state with localStorage check
+const initialState = {
+  isAuthenticated: !!localStorage.getItem('user'),
+  user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null,
+};
 
 // Create AuthContext
-const AuthContext = createContext();
+const AuthContext = createContext(initialState);
 
-// Define the initial state
-const initialState = {
-    isAuthenticated: false,
-    user: null,
-};
+// Custom Hook for using the AuthContext
+export const useAuth = () => useContext(AuthContext);
 
-// Create the reducer function
+// Reducer function to manage login and logout actions
 const authReducer = (state, action) => {
-    switch (action.type) {
-        case 'LOGIN':
-            return {
-                ...state,
-                isAuthenticated: true,
-                user: action.payload,
-            };
-        case 'LOGOUT':
-            return {
-                ...state,
-                isAuthenticated: false,
-                user: null,
-            };
-        default:
-            return state;
-    }
+  switch (action.type) {
+    case 'LOGIN':
+      localStorage.setItem('user', JSON.stringify(action.payload));
+      return {
+        ...state,
+        isAuthenticated: true,
+        user: action.payload,
+      };
+    case 'LOGOUT':
+      localStorage.removeItem('user');
+      return {
+        ...state,
+        isAuthenticated: false,
+        user: null,
+      };
+    default:
+      return state;
+  }
 };
 
-// Create AuthProvider component
+// AuthProvider component to wrap around the app
 export const AuthProvider = ({ children }) => {
-    const [state, dispatch] = useReducer(authReducer, initialState);
+  const [state, dispatch] = useReducer(authReducer, initialState);
 
-    return (
-        <AuthContext.Provider value={{ state, dispatch }}>
-            {children}
-        </AuthContext.Provider>
-    );
+  useEffect(() => {
+    if (state.isAuthenticated) {
+      localStorage.setItem('user', JSON.stringify(state.user));
+    } else {
+      localStorage.removeItem('user');
+    }
+  }, [state.isAuthenticated, state.user]);
+
+  return (
+    <AuthContext.Provider value={{ ...state, dispatch }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-// Custom hook to use the AuthContext
-export const useAuth = () => {
-    return useContext(AuthContext);
+// PropTypes for AuthProvider
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };
